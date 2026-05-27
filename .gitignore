@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.pyc
 
 # Cache (don't commit cached transcriptions)
 cache/
@@ -28,3 +29,11 @@ Thumbs.db
 # Temp files
 *.tmp
 temp/
+temp_audio.*
+
+# Node (for later)
+node_modules/
+dist/
+
+# Notes
+notes.md
