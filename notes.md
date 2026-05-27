@@ -1,9 +1,7 @@
-Here's your updated `TODO.md`:
-
 ```markdown
 # 🎯 VIDEO TRANSCRIPTION API - MASTER TODO
 
-> **Last updated:** Phase 1 complete. Starting Phase 2.
+> **Last updated:** Phase 1 & 2 complete. Starting Phase 3.
 
 ---
 
@@ -15,7 +13,7 @@ Here's your updated `TODO.md`:
 - [x] **1.4** File-based caching with TTL + max files cleanup
 - [x] **1.5** Progress callbacks & error handling
 - [x] **1.6** Lazy model loading (loads once, reused)
-- [x] **1.7** Tested platforms: FB ✅ | IG ✅ | TikTok ✅ | YT (pending but yt-dlp = works)
+- [x] **1.7** Tested platforms: FB ✅ | IG ✅ | TikTok ✅ | YT ✅
 
 ### Phase 1 Performance Summary
 
@@ -31,40 +29,49 @@ Here's your updated `TODO.md`:
 | RAM usage | ✅ | Near-zero for cache (file-based) |
 | WSL compatible | ✅ | 16GB RAM, no issues |
 
-**Commit:** `git commit -m "Phase 1: Video transcriber with file caching"`
+**Commit:** `8fdd7d6 Phase 1: Video transcriber with file caching`
 
 ---
 
-## 🔵 PHASE 2: PYTHON FASTAPI SERVICE 🔌 (CURRENT)
+## 🔵 PHASE 2: PYTHON FASTAPI SERVICE ✅ DONE
 
-- [ ] **2.1** Set up FastAPI server (`api/services/server.py`)
+- [x] **2.1** Set up FastAPI server (`api/services/server.py`)
   - `POST /transcribe` - accepts video URL + format choice
   - `GET /transcribe/{job_id}` - get result (instant if cached)
+  - `GET /transcribe/{job_id}/srt` - SRT download
+  - `GET /transcribe/{job_id}/vtt` - VTT download
   - `GET /cache/stats` - cache statistics
   - `DELETE /cache` - clear cache
+  - `GET /jobs` - list active jobs
+  - `DELETE /jobs` - cleanup completed jobs
 
-- [ ] **2.2** File upload support
+- [x] **2.2** File upload support
   - `POST /transcribe/upload` - accept video files directly
-  - Handle large files with streaming upload
+  - Handles large files with streaming upload
+  - Auto-cleanup of temp files
 
-- [ ] **2.3** Response formats
+- [x] **2.3** Response formats
   - JSON (word-by-word text)
   - JSON (timeline segments)
   - Raw SRT download
   - Raw VTT download
 
-- [ ] **2.4** Background tasks
+- [x] **2.4** Background tasks
   - Long transcriptions run in background
   - Return job ID immediately
   - Poll for status/results
+  - Progress tracking (0-100%)
 
-- [ ] **2.5** `requirements.txt`
-  - Pin exact versions
+- [x] **2.5** `requirements.txt` created
   - `faster-whisper`, `yt-dlp`, `fastapi`, `uvicorn`, `python-multipart`
+
+- [x] **2.6** Tested: 16-minute video transcribed flawlessly
+
+**Commit:** `ce461fe Phase 1-2: Core transcriber + FastAPI server`
 
 ---
 
-## 🟡 PHASE 3: NODE.JS API GATEWAY 🟢
+## 🟡 PHASE 3: NODE.JS API GATEWAY 🟢 (CURRENT)
 
 - [ ] **3.1** Initialize Node.js project
   - Express.js or Fastify
@@ -157,7 +164,7 @@ Here's your updated `TODO.md`:
 
 ```
 ✅ Phase 1: Core Python Service     ████████████████████ 100%
-⬜ Phase 2: FastAPI Service          ░░░░░░░░░░░░░░░░░░░░   0%
+✅ Phase 2: FastAPI Service          ████████████████████ 100%
 ⬜ Phase 3: Node.js API Gateway      ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 4: Queue System             ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 5: Storage & Database       ░░░░░░░░░░░░░░░░░░░░   0%
@@ -172,16 +179,23 @@ Here's your updated `TODO.md`:
 ```
 transcribe/
 ├── api/
-│   └── services/
-│       └── transcriber.py      ✅ Phase 1 complete
+│   ├── services/
+│   │   ├── transcriber.py      ✅ Phase 1
+│   │   └── server.py           ✅ Phase 2
+│   └── src/
+│       ├── middleware/
+│       │   └── rateLimit.ts    ⬜ Phase 3
+│       └── routes/
+│           └── transcription.ts ⬜ Phase 3
 ├── cache/
-│   └── transcriptions/         ✅ Auto-created, 2 files
+│   └── transcriptions/         ✅ 10 cached files
 ├── worker/
 │   └── transcription.worker.ts ⬜ Phase 4
 ├── docker-compose.yml          ⬜ Phase 6
-├── test_main.py                ✅ Phase 1 test suite
+├── requirements.txt            ✅
+├── test_main.py                ✅ Test suite
 ├── TODO.md                     ✅ This file
-└── .gitignore                  ✅ Created
+└── .gitignore                  ✅
 ```
 
 ---
@@ -201,9 +215,7 @@ transcribe/
 
 ---
 
-## 🚀 Next Up: Phase 2
+## 🚀 Next Up: Phase 3
 
-Create `api/services/server.py` - FastAPI wrapper around `transcriber.py`
+Initialize Node.js API Gateway with TypeScript, API key auth, and rate limiting.
 ```
-
----

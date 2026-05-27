@@ -31,9 +31,14 @@ Thumbs.db
 temp/
 temp_audio.*
 
-# Node (for later)
-node_modules/
-dist/
-
 # Notes
 notes.md
+
+# Node
+node_modules/
+dist/
+pnpm-lock.yaml
+package-lock.json
+*.mp4
+*.mp3
+*.wav

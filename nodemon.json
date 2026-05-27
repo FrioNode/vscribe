@@ -1,0 +1,14 @@
+{
+  "watch": ["api/src"],
+  "ext": "ts,json",
+  "ignore": [
+    "api/services/*",
+    "cache/*",
+    "*.py",
+    "*.pyc",
+    "__pycache__",
+    ".env",
+    "node_modules"
+  ],
+  "delay": 500
+}
