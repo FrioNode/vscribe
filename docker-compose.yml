@@ -1,0 +1,23 @@
+# docker-compose.yml
+services:
+  api:
+    build: ./api
+    deploy:
+      replicas: 3  # Multiple API instances
+    
+  transcriber:
+    build: ./transcriber
+    deploy:
+      replicas: 2  # Multiple transcription workers
+    runtime: nvidia  # GPU support
+    
+  worker:
+    build: ./worker
+    deploy:
+      replicas: 3
+    
+  redis:
+    image: redis:alpine
+    
+  postgres:
+    image: postgres:15
