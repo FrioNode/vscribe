@@ -1,7 +1,7 @@
 ```markdown
 # 🎯 VIDEO TRANSCRIPTION API - MASTER TODO
 
-> **Last updated:** Phase 1, 2, 3 & 4 complete. Starting Phase 5.
+> **Last updated:** Phase 1-5 complete. Starting Phase 6.
 
 ---
 
@@ -35,31 +35,12 @@
 
 ## 🔵 PHASE 2: PYTHON FASTAPI SERVICE ✅ DONE
 
-- [x] **2.1** FastAPI server (`api/services/server.py`)
-  - `POST /transcribe` - URL submission
-  - `GET /transcribe/{job_id}` - job status
-  - `GET /transcribe/{job_id}/srt` - SRT download
-  - `GET /transcribe/{job_id}/vtt` - VTT download
-  - `GET /cache/stats` - cache statistics
-  - `DELETE /cache` - clear cache
-  - `GET /jobs` - list active jobs
-  - `DELETE /jobs` - cleanup completed jobs
-
-- [x] **2.2** File upload support
-  - `POST /transcribe/upload` - streaming upload
-  - Auto-cleanup of temp files
-
-- [x] **2.3** Response formats
-  - JSON (word-by-word + timeline)
-  - SRT + VTT downloads
-
-- [x] **2.4** Background tasks
-  - Instant job_id return
-  - Progress tracking (0-100%)
-
+- [x] **2.1** FastAPI server (`api/services/server.py`) - all CRUD endpoints
+- [x] **2.2** File upload support with streaming
+- [x] **2.3** JSON + SRT + VTT response formats
+- [x] **2.4** Background tasks with instant job_id
 - [x] **2.5** `requirements.txt` pinned
-
-- [x] **2.6** Tested: 16-min video, multiple platforms
+- [x] **2.6** Tested: 16-min video, all platforms
 
 **Commit:** `ce461fe`
 
@@ -67,37 +48,12 @@
 
 ## 🟡 PHASE 3: NODE.JS API GATEWAY ✅ DONE
 
-- [x] **3.1** Express + TypeScript project
-  - `api/src/index.ts` - main server (port 3000)
-  - `tsconfig.json` - strict TypeScript config
-  - `nodemon.json` - dev auto-reload (ignores cache/)
-
-- [x] **3.2** API Key authentication
-  - `api/src/middleware/apiKey.ts`
-  - Keys stored in `.env` (not hardcoded)
-  - `X-API-Key` header validation
-  - Test keys: `test-key-free-123`, `test-key-premium-456`
-
-- [x] **3.3** Rate limiting
-  - `api/src/middleware/rateLimit.ts`
-  - Tiered: free (10/hr) | premium (100/hr)
-  - 429 response with retry-after
-  - Health endpoint: 30/min/IP
-
-- [x] **3.4** API Endpoints
-  - `POST /api/v1/transcribe` - URL submission
-  - `POST /api/v1/transcribe/upload` - File upload (multer)
-  - `GET /api/v1/transcribe/:jobId` - Job status
-  - `GET /api/v1/transcribe/:jobId/result` - Result only
-  - `GET /api/v1/transcribe/:jobId/srt` - SRT download
-  - `GET /api/v1/transcribe/:jobId/vtt` - VTT download
-  - `GET /api/v1/cache/stats` - Cache stats
-  - `GET /health` - Health check (rate limited, no auth)
-
-- [x] **3.5** Security
-  - CORS + Helmet headers
-  - Input validation & error handling
-  - All endpoints locked except /health
+- [x] **3.1** Express + TypeScript (port 3000)
+- [x] **3.2** API Key auth (X-API-Key header)
+- [x] **3.3** Tiered rate limiting (free 10/hr, premium 100/hr)
+- [x] **3.4** All transcription endpoints + SRT/VTT downloads
+- [x] **3.5** CORS, Helmet, health check rate limited (30/min/IP)
+- [x] **3.6** Tested: URL, file upload, rate limits, security
 
 **Commit:** `db13225`
 
@@ -105,55 +61,49 @@
 
 ## 🟠 PHASE 4: QUEUE SYSTEM ✅ DONE
 
-- [x] **4.1** Redis setup
-  - Local Redis 6.0.16 (works, 6.2+ recommended)
-  - Password protected
-  - Config in `.env`
-
-- [x] **4.2** BullMQ queue setup
-  - `api/src/config/queue.ts` - Queue definition
-  - `worker/transcription.worker.ts` - Job processor
-  - Premium priority queue jumping
-  - 3 retry attempts with exponential backoff
-  - Job persistence across restarts
-
-- [x] **4.3** Job lifecycle
-  - Unique job IDs (`txr_` prefixed UUIDs)
-  - Concurrency: 2 jobs at once
-  - Rate limit: 5 jobs/min
-  - Live progress tracking (10-100%)
-  - Completed/failed job retention (100/50)
-
-- [x] **4.4** Queue monitoring
-  - `GET /api/v1/queue/stats` - Real-time counts
-  - Worker logs with progress per job
+- [x] **4.1** Redis + BullMQ setup
+- [x] **4.2** Worker with 2 concurrent jobs, 5/min rate limit
+- [x] **4.3** Unique job IDs (`txr_` prefix), retry logic (3x)
+- [x] **4.4** Queue stats endpoint, progress tracking
 
 **Commit:** `7da2b23`
 
 ---
 
-## 🟣 PHASE 5: STORAGE & DATABASE 💾 (CURRENT)
+## 🟣 PHASE 5: DATABASE & AUTH ✅ DONE
 
-- [ ] **5.1** Database setup
-  - **Start:** SQLite + WAL mode (zero setup)
-  - **Migrate later:** PostgreSQL via SQLAlchemy
-  - Tables: `users`, `jobs`, `api_usage`
+- [x] **5.1** SQLite + WAL mode (migration-ready schema)
+  - Tables: `pending_registrations`, `users`, `password_resets`, `api_keys`, `usage_logs`, `transcription_jobs`
 
-- [ ] **5.2** SQLAlchemy models (migration-ready)
-  - Easy switch from SQLite → PostgreSQL
+- [x] **5.2** Two-step registration (OTP → verify → API key)
+- [x] **5.3** Brevo mailer integration
+  - Registration OTP, welcome + API key, password reset OTP
+  - Password changed notification
+  - New key created, key rotated notifications
+  - Usage warning, limit reached alerts
 
-- [ ] **5.3** API key management
-  - User registration endpoint
-  - Key generation & revocation
-  - Replace hardcoded `.env` keys
+- [x] **5.4** Auth endpoints
+  - `POST /api/v1/auth/register` - Step 1: sends OTP
+  - `POST /api/v1/auth/verify` - Step 2: creates user + API key
+  - `POST /api/v1/auth/login` - Returns user info + keys
+  - `POST /api/v1/auth/reset-password` - Sends reset OTP
+  - `POST /api/v1/auth/reset-password/confirm` - New password
 
-- [ ] **5.4** File storage
-  - Temp audio cleanup after transcription
-  - Optional: S3/MinIO for persistent storage
+- [x] **5.5** API key management (protected)
+  - `GET /api/v1/auth/keys` - List keys
+  - `POST /api/v1/auth/keys` - Create new key
+  - `DELETE /api/v1/auth/keys/:key` - Revoke (blocks last key)
+  - `POST /api/v1/auth/keys/:key/rotate` - Rotate (revoke + new)
+
+- [x] **5.6** Database-backed auth middleware (replaces .env keys)
+- [x] **5.7** Usage logging + job tracking in DB
+- [x] **5.8** Test users seeded for development
+
+**Commit:** `1d66d00`
 
 ---
 
-## ⚫ PHASE 6: DOCKER & DEPLOYMENT 🐳
+## ⚫ PHASE 6: DOCKER & DEPLOYMENT 🐳 (CURRENT)
 
 - [ ] **6.1** Dockerfile for Python service
 - [ ] **6.2** Dockerfile for Node.js API
@@ -161,20 +111,20 @@
   - Python transcriber
   - Node.js API
   - Redis (for queue)
-  - Database (SQLite or PostgreSQL)
-- [ ] **6.4** Environment variables (`.env`)
+  - Database (SQLite volume)
+- [ ] **6.4** Environment variables (`.env.example`)
 - [ ] **6.5** Test full stack locally
 
 ---
 
 ## 🔴 PHASE 7: PRODUCTION READY 🚀
 
-- [ ] **7.1** Webhook support
+- [ ] **7.1** Webhook support (notify on job complete)
 - [ ] **7.2** JWT for dashboard (analytics, account management)
-- [ ] **7.3** Monitoring & logging
-- [ ] **7.4** Premium tier features
+- [ ] **7.3** Monitoring & logging (Prometheus + Grafana)
+- [ ] **7.4** Premium tier features (more req/hr, priority queue)
 - [ ] **7.5** Usage analytics dashboard
-- [ ] **7.6** Multi-user support
+- [ ] **7.6** File upload re-enabled with queue
 - [ ] **7.7** Concurrent transcription scaling
 
 ---
@@ -186,7 +136,7 @@
 ✅ Phase 2: FastAPI Service          ████████████████████ 100%
 ✅ Phase 3: Node.js API Gateway      ████████████████████ 100%
 ✅ Phase 4: Queue System             ████████████████████ 100%
-⬜ Phase 5: Storage & Database       ░░░░░░░░░░░░░░░░░░░░   0%
+✅ Phase 5: Database & Auth          ████████████████████ 100%
 ⬜ Phase 6: Docker & Deployment      ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 7: Production Ready         ░░░░░░░░░░░░░░░░░░░░   0%
 ```
@@ -200,30 +150,39 @@ transcribe/
 ├── api/
 │   ├── services/
 │   │   ├── transcriber.py         ✅ Phase 1
-│   │   └── server.py              ✅ Phase 2
+│   │   ├── server.py              ✅ Phase 2
+│   │   └── mailer.ts              ✅ Phase 5 (Brevo)
 │   └── src/
 │       ├── config/
 │       │   └── queue.ts           ✅ Phase 4 (BullMQ)
-│       ├── index.ts               ✅ Phase 3 (Express server)
+│       ├── db/
+│       │   ├── schema.sql         ✅ Phase 5
+│       │   ├── init.ts            ✅ Phase 5
+│       │   └── queries.ts         ✅ Phase 5
+│       ├── index.ts               ✅ Phase 3/5
 │       ├── middleware/
-│       │   ├── apiKey.ts          ✅ Phase 3 (.env keys)
-│       │   └── rateLimit.ts       ✅ Phase 3 (tiered + health)
+│       │   ├── apiKey.ts          ✅ Phase 5 (DB-backed)
+│       │   └── rateLimit.ts       ✅ Phase 3
 │       ├── routes/
-│       │   └── transcription.ts   ✅ Phase 4 (queue-powered)
+│       │   ├── auth.ts            ✅ Phase 5
+│       │   └── transcription.ts   ✅ Phase 4
 │       └── types/
-│           └── index.ts           ✅ Phase 3 (TypeScript types)
+│           └── index.ts           ✅ Phase 3
 ├── cache/
-│   └── transcriptions/            ✅ Auto-managed cache
+│   └── transcriptions/            ✅ Auto-managed
+├── data/
+│   └── transcribe.db              ✅ SQLite (WAL)
 ├── worker/
-│   └── transcription.worker.ts    ✅ Phase 4 (BullMQ worker)
-├── .env                           ✅ Environment variables
+│   └── transcription.worker.ts    ✅ Phase 4
+├── .env                           ✅ Secrets
 ├── .gitignore                     ✅
 ├── docker-compose.yml             ⬜ Phase 6
-├── nodemon.json                   ✅ Dev config
-├── package.json                   ✅ Node dependencies
-├── requirements.txt               ✅ Python dependencies
-├── tsconfig.json                  ✅ TypeScript config
-├── test_main.py                   ✅ Phase 1 test suite
+├── nodemon.json                   ✅
+├── package.json                   ✅
+├── pnpm-lock.yaml                 ✅
+├── requirements.txt               ✅
+├── tsconfig.json                  ✅
+├── test_main.py                   ✅
 └── TODO.md                        ✅ This file
 ```
 
@@ -238,17 +197,17 @@ transcribe/
 | Node.js port | 3000 |
 | Queue | BullMQ + Redis (2 concurrent, 5/min) |
 | Job IDs | `txr_` prefixed UUIDs |
-| Input types | URLs + File upload |
-| Auth (CLI) | API Key in `X-API-Key` header |
+| Database | SQLite + WAL (migration-ready) |
+| Auth (API) | API Key in `X-API-Key` header (DB-backed) |
 | Auth (Dashboard) | JWT tokens (Phase 7) |
-| Database | SQLite + WAL (migration-ready for PostgreSQL) |
+| Email | Brevo (transactional) |
 | Caching | File-based (TTL + max files, no Redis needed) |
 | Model | faster-whisper base (CPU, int8) |
 | Video download | yt-dlp |
 
 ---
 
-## 🚀 Next Up: Phase 5
+## 🚀 Next Up: Phase 6
 
-Set up SQLite database with SQLAlchemy for user management, replace hardcoded API keys with real user registration, and add job history tracking.
+Dockerize all services — one `docker-compose up` to rule them all.
 ```

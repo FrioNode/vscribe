@@ -1,23 +1,80 @@
-# docker-compose.yml
+
 services:
-  api:
-    build: ./api
-    deploy:
-      replicas: 3  # Multiple API instances
-    
+  # Python transcription service
   transcriber:
-    build: ./transcriber
-    deploy:
-      replicas: 2  # Multiple transcription workers
-    runtime: nvidia  # GPU support
-    
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./cache/transcriptions:/app/cache/transcriptions
+    environment:
+      - WHISPER_MODEL=base
+      - CACHE_MAX_AGE_DAYS=7
+      - CACHE_MAX_FILES=100
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Node.js API gateway
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      - PYTHON_SERVICE_URL=http://transcriber:8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=node
+      - DB_PATH=/app/data/transcribe.db
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - MAIL_FROM=${MAIL_FROM:-noreply@frionode.online}
+    depends_on:
+      transcriber:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # Queue worker
   worker:
-    build: ./worker
-    deploy:
-      replicas: 3
-    
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    command: pnpm exec ts-node worker/transcription.worker.ts
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHON_SERVICE_URL=http://transcriber:8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=node
+      - DB_PATH=/app/data/transcribe.db
+    depends_on:
+      transcriber:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # Redis
   redis:
-    image: redis:alpine
-    
-  postgres:
-    image: postgres:15
+    image: redis:7-alpine
+    command: redis-server --requirepass node --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:

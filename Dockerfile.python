@@ -1,0 +1,18 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install ffmpeg + curl (for healthcheck)
+RUN apt-get update && apt-get install -y ffmpeg curl && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY api/services/transcriber.py api/services/
+COPY api/services/server.py api/services/
+
+RUN mkdir -p /app/cache/transcriptions
+
+EXPOSE 8000
+
+CMD ["uvicorn", "api.services.server:app", "--host", "0.0.0.0", "--port", "8000"]
