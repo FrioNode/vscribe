@@ -1,7 +1,7 @@
 ```markdown
 # 🎯 VIDEO TRANSCRIPTION API - MASTER TODO
 
-> **Last updated:** Phase 1-5 complete. Starting Phase 6.
+> **Last updated:** Phase 1-6 complete. Starting Phase 7.
 
 ---
 
@@ -73,55 +73,42 @@
 ## 🟣 PHASE 5: DATABASE & AUTH ✅ DONE
 
 - [x] **5.1** SQLite + WAL mode (migration-ready schema)
-  - Tables: `pending_registrations`, `users`, `password_resets`, `api_keys`, `usage_logs`, `transcription_jobs`
-
 - [x] **5.2** Two-step registration (OTP → verify → API key)
-- [x] **5.3** Brevo mailer integration
-  - Registration OTP, welcome + API key, password reset OTP
-  - Password changed notification
-  - New key created, key rotated notifications
-  - Usage warning, limit reached alerts
-
-- [x] **5.4** Auth endpoints
-  - `POST /api/v1/auth/register` - Step 1: sends OTP
-  - `POST /api/v1/auth/verify` - Step 2: creates user + API key
-  - `POST /api/v1/auth/login` - Returns user info + keys
-  - `POST /api/v1/auth/reset-password` - Sends reset OTP
-  - `POST /api/v1/auth/reset-password/confirm` - New password
-
-- [x] **5.5** API key management (protected)
-  - `GET /api/v1/auth/keys` - List keys
-  - `POST /api/v1/auth/keys` - Create new key
-  - `DELETE /api/v1/auth/keys/:key` - Revoke (blocks last key)
-  - `POST /api/v1/auth/keys/:key/rotate` - Rotate (revoke + new)
-
-- [x] **5.6** Database-backed auth middleware (replaces .env keys)
+- [x] **5.3** Brevo mailer integration (7 email templates)
+- [x] **5.4** Auth endpoints (register, verify, login, reset password)
+- [x] **5.5** API key management (CRUD + rotation + last-key protection)
+- [x] **5.6** Database-backed auth middleware
 - [x] **5.7** Usage logging + job tracking in DB
-- [x] **5.8** Test users seeded for development
 
 **Commit:** `1d66d00`
 
 ---
 
-## ⚫ PHASE 6: DOCKER & DEPLOYMENT 🐳 (CURRENT)
+## ⚫ PHASE 6: DOCKER & DEPLOYMENT ✅ DONE
 
-- [ ] **6.1** Dockerfile for Python service
-- [ ] **6.2** Dockerfile for Node.js API
-- [ ] **6.3** `docker-compose.yml`
-  - Python transcriber
-  - Node.js API
-  - Redis (for queue)
-  - Database (SQLite volume)
-- [ ] **6.4** Environment variables (`.env.example`)
-- [ ] **6.5** Test full stack locally
+- [x] **6.1** `Dockerfile.python` - Python 3.10-slim + ffmpeg + curl
+- [x] **6.2** `Dockerfile.node` - Node 22-slim + pnpm + native builds
+- [x] **6.3** `docker-compose.yml` - 4 services
+  - transcriber (port 8000) with healthcheck
+  - api (port 3000) with DB volume
+  - worker (BullMQ processor)
+  - redis (port 6379, Redis 7 Alpine, AOF persistence)
+- [x] **6.4** `.env.example` for safe sharing
+- [x] **6.5** Tested full stack: `docker compose up -d`
+  - Transcription: ✅ (first run ~143s, cache hit ~0.041s)
+  - Auth: ✅ (login, keys, rotate)
+  - Rate limiting: ✅
+  - Queue: ✅ (worker processing jobs)
+
+**Commit:** `05cda23`
 
 ---
 
-## 🔴 PHASE 7: PRODUCTION READY 🚀
+## 🔴 PHASE 7: PRODUCTION READY 🚀 (CURRENT)
 
 - [ ] **7.1** Webhook support (notify on job complete)
 - [ ] **7.2** JWT for dashboard (analytics, account management)
-- [ ] **7.3** Monitoring & logging (Prometheus + Grafana)
+- [ ] **7.3** Monitoring & logging (health metrics, error tracking)
 - [ ] **7.4** Premium tier features (more req/hr, priority queue)
 - [ ] **7.5** Usage analytics dashboard
 - [ ] **7.6** File upload re-enabled with queue
@@ -137,7 +124,7 @@
 ✅ Phase 3: Node.js API Gateway      ████████████████████ 100%
 ✅ Phase 4: Queue System             ████████████████████ 100%
 ✅ Phase 5: Database & Auth          ████████████████████ 100%
-⬜ Phase 6: Docker & Deployment      ░░░░░░░░░░░░░░░░░░░░   0%
+✅ Phase 6: Docker & Deployment      ████████████████████ 100%
 ⬜ Phase 7: Production Ready         ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
@@ -151,35 +138,35 @@ transcribe/
 │   ├── services/
 │   │   ├── transcriber.py         ✅ Phase 1
 │   │   ├── server.py              ✅ Phase 2
-│   │   └── mailer.ts              ✅ Phase 5 (Brevo)
+│   │   └── mailer.ts              ✅ Phase 5
 │   └── src/
 │       ├── config/
-│       │   └── queue.ts           ✅ Phase 4 (BullMQ)
+│       │   └── queue.ts           ✅ Phase 4
 │       ├── db/
 │       │   ├── schema.sql         ✅ Phase 5
 │       │   ├── init.ts            ✅ Phase 5
 │       │   └── queries.ts         ✅ Phase 5
 │       ├── index.ts               ✅ Phase 3/5
 │       ├── middleware/
-│       │   ├── apiKey.ts          ✅ Phase 5 (DB-backed)
+│       │   ├── apiKey.ts          ✅ Phase 5
 │       │   └── rateLimit.ts       ✅ Phase 3
 │       ├── routes/
 │       │   ├── auth.ts            ✅ Phase 5
 │       │   └── transcription.ts   ✅ Phase 4
 │       └── types/
 │           └── index.ts           ✅ Phase 3
-├── cache/
-│   └── transcriptions/            ✅ Auto-managed
-├── data/
-│   └── transcribe.db              ✅ SQLite (WAL)
 ├── worker/
 │   └── transcription.worker.ts    ✅ Phase 4
+├── Dockerfile.python              ✅ Phase 6
+├── Dockerfile.node                ✅ Phase 6
+├── docker-compose.yml             ✅ Phase 6
 ├── .env                           ✅ Secrets
+├── .env.example                   ✅ Phase 6
 ├── .gitignore                     ✅
-├── docker-compose.yml             ⬜ Phase 6
 ├── nodemon.json                   ✅
 ├── package.json                   ✅
 ├── pnpm-lock.yaml                 ✅
+├── pnpm-workspace.yaml            ✅
 ├── requirements.txt               ✅
 ├── tsconfig.json                  ✅
 ├── test_main.py                   ✅
@@ -193,21 +180,22 @@ transcribe/
 | Decision | Choice |
 |----------|--------|
 | Architecture | Microservices (Python FastAPI + Node.js Express) |
+| Containerization | Docker Compose (4 services) |
 | Python port | 8000 |
 | Node.js port | 3000 |
-| Queue | BullMQ + Redis (2 concurrent, 5/min) |
+| Queue | BullMQ + Redis 7 Alpine (2 concurrent, 5/min) |
 | Job IDs | `txr_` prefixed UUIDs |
 | Database | SQLite + WAL (migration-ready) |
 | Auth (API) | API Key in `X-API-Key` header (DB-backed) |
 | Auth (Dashboard) | JWT tokens (Phase 7) |
 | Email | Brevo (transactional) |
-| Caching | File-based (TTL + max files, no Redis needed) |
+| Caching | File-based (TTL + max files) |
 | Model | faster-whisper base (CPU, int8) |
 | Video download | yt-dlp |
 
 ---
 
-## 🚀 Next Up: Phase 6
+## 🚀 Next Up: Phase 7
 
-Dockerize all services — one `docker-compose up` to rule them all.
+Production polish — webhooks, JWT dashboard auth, monitoring, premium tiers.
 ```
