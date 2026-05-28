@@ -3,72 +3,53 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { transcriptionRoutes } from './routes/transcription';
+import { authRoutes } from './routes/auth';
 import { apiKeyMiddleware } from './middleware/apiKey';
 import { rateLimiter } from './middleware/rateLimit';
 
 dotenv.config();
 
+import './db/init';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Simple in-memory rate limiter for health endpoint
+// Health check rate limiter
 const healthChecks: Record<string, { count: number; resetTime: number }> = {};
-const HEALTH_LIMIT = 30; // 30 requests per minute per IP
-const HEALTH_WINDOW = 60 * 1000; // 1 minute
+const HEALTH_LIMIT = 30;
+const HEALTH_WINDOW = 60 * 1000;
 
 function healthRateLimiter(req: Request, res: Response, next: NextFunction) {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
   const record = healthChecks[ip];
-
-  // Reset window
   if (!record || now > record.resetTime) {
     healthChecks[ip] = { count: 1, resetTime: now + HEALTH_WINDOW };
     return next();
   }
-
-  // Check limit
   if (record.count >= HEALTH_LIMIT) {
-    return res.status(429).json({
-      error: 'Too many requests',
-      message: 'Health check rate limit exceeded',
-      retryAfter: Math.ceil((record.resetTime - now) / 1000)
-    });
+    return res.status(429).json({ error: 'Too many requests' });
   }
-
   record.count++;
   next();
 }
 
-// Health check (rate limited, no auth required)
+// Public
 app.get('/health', healthRateLimiter, (_req: Request, res: Response) => {
-  res.json({
-    service: 'Video Transcription API Gateway',
-    version: '1.0.0',
-    status: 'healthy',
-    python_service: process.env.PYTHON_SERVICE_URL
-  });
+  res.json({ service: 'Video Transcription API Gateway', version: '1.0.0', status: 'healthy' });
 });
 
-// API Routes (with auth + rate limit)
-app.use(
-  '/api/v1',
-  apiKeyMiddleware,
-  rateLimiter,
-  transcriptionRoutes
-);
+// Auth routes (public - no API key needed for register/login/verify/reset)
+app.use('/api/v1', authRoutes);
 
-// 404 handler
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({ error: 'Not found' });
-});
+// Protected routes (API key required)
+app.use('/api/v1', apiKeyMiddleware, rateLimiter, transcriptionRoutes);
 
-// Error handler
+app.use((_req: Request, res: Response) => res.status(404).json({ error: 'Not found' }));
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal server error' });
@@ -77,7 +58,5 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 app.listen(PORT, () => {
   console.log(`🚀 API Gateway running on http://localhost:${PORT}`);
   console.log(`📡 Python service: ${process.env.PYTHON_SERVICE_URL}`);
-  console.log(`🛡️  Health check: ${HEALTH_LIMIT} req/min per IP`);
+  console.log(`🗄️  Database: SQLite (WAL mode)`);
 });
-
-export default app;

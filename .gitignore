@@ -42,3 +42,9 @@ package-lock.json
 *.mp4
 *.mp3
 *.wav
+
+# Database
+data/
+*.db
+*.db-wal
+*.db-shm

@@ -27,7 +27,10 @@
     "worker": "ts-node worker/transcription.worker.ts"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^5.0.4",
     "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
     "bullmq": "^5.77.5",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -35,13 +38,17 @@
     "form-data": "^4.0.5",
     "helmet": "^8.2.0",
     "ioredis": "^5.11.0",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.9.1",
+    "@types/uuid": "^11.0.0",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"

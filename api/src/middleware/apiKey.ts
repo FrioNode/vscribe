@@ -1,25 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
+import { getApiKey, updateKeyLastUsed } from '../db/queries';
 
-// Load from environment variables
-const VALID_API_KEYS: Record<string, { tier: string; email: string }> = {
-  [process.env.API_KEY_FREE || 'test-key-free-123']: {
-    tier: 'free',
-    email: 'free@test.com'
-  },
-  [process.env.API_KEY_PREMIUM || 'test-key-premium-456']: {
-    tier: 'premium',
-    email: 'premium@test.com'
-  },
-};
+interface KeyRecord {
+  user_id: number;
+  user_plan: string;
+  email: string;
+  limit_hr: number;
+  user_active: number;
+  verified: number;
+}
 
-// Extend Express Request to include user
 declare global {
   namespace Express {
     interface Request {
       user?: {
+        userId: number;
         apiKey: string;
         tier: string;
         email: string;
+        limitHr: number;
       };
     }
   }
@@ -32,25 +31,35 @@ export function apiKeyMiddleware(req: Request, res: Response, next: NextFunction
     return res.status(401).json({
       error: 'API key required',
       message: 'Add your API key to the X-API-Key header',
-      hint: 'Get your free key at /api/v1/register'
+      hint: 'Get your free key at /api/v1/auth/register'
     });
   }
 
-  const user = VALID_API_KEYS[apiKey];
+  const keyRecord = getApiKey(apiKey) as KeyRecord | undefined;
 
-  if (!user) {
+  if (!keyRecord) {
     return res.status(403).json({
       error: 'Invalid API key',
-      message: 'The provided API key is not valid'
+      message: 'The provided API key is not valid or has been revoked'
     });
   }
 
-  // Attach user info to request
+  if (!keyRecord.user_active) {
+    return res.status(403).json({
+      error: 'Account suspended',
+      message: 'Your account has been deactivated'
+    });
+  }
+
   req.user = {
+    userId: keyRecord.user_id,
     apiKey,
-    tier: user.tier,
-    email: user.email
+    tier: keyRecord.user_plan,
+    email: keyRecord.email,
+    limitHr: keyRecord.limit_hr
   };
+
+  updateKeyLastUsed(apiKey);
 
   next();
 }

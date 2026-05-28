@@ -1,7 +1,7 @@
 ```markdown
 # 🎯 VIDEO TRANSCRIPTION API - MASTER TODO
 
-> **Last updated:** Phase 1, 2 & 3 complete. Starting Phase 4.
+> **Last updated:** Phase 1, 2, 3 & 4 complete. Starting Phase 5.
 
 ---
 
@@ -29,7 +29,7 @@
 | RAM usage | ✅ | Near-zero for cache (file-based) |
 | WSL compatible | ✅ | 16GB RAM, no issues |
 
-**Commit:** `8fdd7d6 Phase 1: Video transcriber with file caching`
+**Commit:** `8fdd7d6`
 
 ---
 
@@ -61,7 +61,7 @@
 
 - [x] **2.6** Tested: 16-min video, multiple platforms
 
-**Commit:** `ce461fe Phase 1-2: Core transcriber + FastAPI server`
+**Commit:** `ce461fe`
 
 ---
 
@@ -82,7 +82,7 @@
   - `api/src/middleware/rateLimit.ts`
   - Tiered: free (10/hr) | premium (100/hr)
   - 429 response with retry-after
-  - Rate limit headers on responses
+  - Health endpoint: 30/min/IP
 
 - [x] **3.4** API Endpoints
   - `POST /api/v1/transcribe` - URL submission
@@ -92,43 +92,47 @@
   - `GET /api/v1/transcribe/:jobId/srt` - SRT download
   - `GET /api/v1/transcribe/:jobId/vtt` - VTT download
   - `GET /api/v1/cache/stats` - Cache stats
-  - `GET /health` - Health check (no auth)
+  - `GET /health` - Health check (rate limited, no auth)
 
 - [x] **3.5** Security
-  - CORS enabled
-  - Helmet security headers
-  - Input validation
-  - Error handling with proper status codes
+  - CORS + Helmet headers
+  - Input validation & error handling
+  - All endpoints locked except /health
 
-- [x] **3.6** Tested
-  - URL transcription (FB, IG, TikTok, YT) ✅
-  - File upload (test50.mp4 - 475KB) ✅
-  - Rate limit 429 verified ✅
-  - API key validation ✅
-
-**Commit:** `[latest] Phase 3: Node.js API Gateway with auth & rate limiting`
+**Commit:** `db13225`
 
 ---
 
-## 🟠 PHASE 4: QUEUE SYSTEM 🔄 (CURRENT)
+## 🟠 PHASE 4: QUEUE SYSTEM ✅ DONE
 
-- [ ] **4.1** Set up Redis
-  - Docker container or local install
-  - Connection config
+- [x] **4.1** Redis setup
+  - Local Redis 6.0.16 (works, 6.2+ recommended)
+  - Password protected
+  - Config in `.env`
 
-- [ ] **4.2** BullMQ queue setup
-  - `worker/transcription.worker.ts` - process jobs
-  - Job priorities (premium users first?)
-  - Retry logic for failed jobs
+- [x] **4.2** BullMQ queue setup
+  - `api/src/config/queue.ts` - Queue definition
+  - `worker/transcription.worker.ts` - Job processor
+  - Premium priority queue jumping
+  - 3 retry attempts with exponential backoff
+  - Job persistence across restarts
 
-- [ ] **4.3** Job lifecycle
-  - Submitted → Downloading → Transcribing → Completed
-  - Real-time progress via WebSocket or polling
-  - Failure handling & automatic retries
+- [x] **4.3** Job lifecycle
+  - Unique job IDs (`txr_` prefixed UUIDs)
+  - Concurrency: 2 jobs at once
+  - Rate limit: 5 jobs/min
+  - Live progress tracking (10-100%)
+  - Completed/failed job retention (100/50)
+
+- [x] **4.4** Queue monitoring
+  - `GET /api/v1/queue/stats` - Real-time counts
+  - Worker logs with progress per job
+
+**Commit:** `7da2b23`
 
 ---
 
-## 🟣 PHASE 5: STORAGE & DATABASE 💾
+## 🟣 PHASE 5: STORAGE & DATABASE 💾 (CURRENT)
 
 - [ ] **5.1** Database setup
   - **Start:** SQLite + WAL mode (zero setup)
@@ -153,7 +157,7 @@
 
 - [ ] **6.1** Dockerfile for Python service
 - [ ] **6.2** Dockerfile for Node.js API
-- [ ] **6.3** `docker-compose.yml` (already created)
+- [ ] **6.3** `docker-compose.yml`
   - Python transcriber
   - Node.js API
   - Redis (for queue)
@@ -166,15 +170,12 @@
 ## 🔴 PHASE 7: PRODUCTION READY 🚀
 
 - [ ] **7.1** Webhook support
-  - Notify user when job completes
-- [ ] **7.2** Authentication
-  - API Key for CLI/scripts
-  - JWT for dashboard (analytics, account management)
+- [ ] **7.2** JWT for dashboard (analytics, account management)
 - [ ] **7.3** Monitoring & logging
-- [ ] **7.4** Rate limit bypass for premium tiers
+- [ ] **7.4** Premium tier features
 - [ ] **7.5** Usage analytics dashboard
 - [ ] **7.6** Multi-user support
-- [ ] **7.7** Concurrent transcription jobs
+- [ ] **7.7** Concurrent transcription scaling
 
 ---
 
@@ -184,7 +185,7 @@
 ✅ Phase 1: Core Python Service     ████████████████████ 100%
 ✅ Phase 2: FastAPI Service          ████████████████████ 100%
 ✅ Phase 3: Node.js API Gateway      ████████████████████ 100%
-⬜ Phase 4: Queue System             ░░░░░░░░░░░░░░░░░░░░   0%
+✅ Phase 4: Queue System             ████████████████████ 100%
 ⬜ Phase 5: Storage & Database       ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 6: Docker & Deployment      ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 7: Production Ready         ░░░░░░░░░░░░░░░░░░░░   0%
@@ -201,18 +202,20 @@ transcribe/
 │   │   ├── transcriber.py         ✅ Phase 1
 │   │   └── server.py              ✅ Phase 2
 │   └── src/
+│       ├── config/
+│       │   └── queue.ts           ✅ Phase 4 (BullMQ)
 │       ├── index.ts               ✅ Phase 3 (Express server)
 │       ├── middleware/
 │       │   ├── apiKey.ts          ✅ Phase 3 (.env keys)
-│       │   └── rateLimit.ts       ✅ Phase 3 (tiered)
+│       │   └── rateLimit.ts       ✅ Phase 3 (tiered + health)
 │       ├── routes/
-│       │   └── transcription.ts   ✅ Phase 3 (all endpoints)
+│       │   └── transcription.ts   ✅ Phase 4 (queue-powered)
 │       └── types/
 │           └── index.ts           ✅ Phase 3 (TypeScript types)
 ├── cache/
 │   └── transcriptions/            ✅ Auto-managed cache
 ├── worker/
-│   └── transcription.worker.ts    ⬜ Phase 4
+│   └── transcription.worker.ts    ✅ Phase 4 (BullMQ worker)
 ├── .env                           ✅ Environment variables
 ├── .gitignore                     ✅
 ├── docker-compose.yml             ⬜ Phase 6
@@ -233,6 +236,8 @@ transcribe/
 | Architecture | Microservices (Python FastAPI + Node.js Express) |
 | Python port | 8000 |
 | Node.js port | 3000 |
+| Queue | BullMQ + Redis (2 concurrent, 5/min) |
+| Job IDs | `txr_` prefixed UUIDs |
 | Input types | URLs + File upload |
 | Auth (CLI) | API Key in `X-API-Key` header |
 | Auth (Dashboard) | JWT tokens (Phase 7) |
@@ -243,7 +248,7 @@ transcribe/
 
 ---
 
-## 🚀 Next Up: Phase 4
+## 🚀 Next Up: Phase 5
 
-Set up Redis + BullMQ queue system for handling multiple concurrent transcription jobs with proper job lifecycle management.
+Set up SQLite database with SQLAlchemy for user management, replace hardcoded API keys with real user registration, and add job history tracking.
 ```
