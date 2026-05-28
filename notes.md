@@ -1,7 +1,7 @@
 ```markdown
 # 🎯 VIDEO TRANSCRIPTION API - MASTER TODO
 
-> **Last updated:** Phase 1 & 2 complete. Starting Phase 3.
+> **Last updated:** Phase 1, 2 & 3 complete. Starting Phase 4.
 
 ---
 
@@ -35,9 +35,9 @@
 
 ## 🔵 PHASE 2: PYTHON FASTAPI SERVICE ✅ DONE
 
-- [x] **2.1** Set up FastAPI server (`api/services/server.py`)
-  - `POST /transcribe` - accepts video URL + format choice
-  - `GET /transcribe/{job_id}` - get result (instant if cached)
+- [x] **2.1** FastAPI server (`api/services/server.py`)
+  - `POST /transcribe` - URL submission
+  - `GET /transcribe/{job_id}` - job status
   - `GET /transcribe/{job_id}/srt` - SRT download
   - `GET /transcribe/{job_id}/vtt` - VTT download
   - `GET /cache/stats` - cache statistics
@@ -46,58 +46,71 @@
   - `DELETE /jobs` - cleanup completed jobs
 
 - [x] **2.2** File upload support
-  - `POST /transcribe/upload` - accept video files directly
-  - Handles large files with streaming upload
+  - `POST /transcribe/upload` - streaming upload
   - Auto-cleanup of temp files
 
 - [x] **2.3** Response formats
-  - JSON (word-by-word text)
-  - JSON (timeline segments)
-  - Raw SRT download
-  - Raw VTT download
+  - JSON (word-by-word + timeline)
+  - SRT + VTT downloads
 
 - [x] **2.4** Background tasks
-  - Long transcriptions run in background
-  - Return job ID immediately
-  - Poll for status/results
+  - Instant job_id return
   - Progress tracking (0-100%)
 
-- [x] **2.5** `requirements.txt` created
-  - `faster-whisper`, `yt-dlp`, `fastapi`, `uvicorn`, `python-multipart`
+- [x] **2.5** `requirements.txt` pinned
 
-- [x] **2.6** Tested: 16-minute video transcribed flawlessly
+- [x] **2.6** Tested: 16-min video, multiple platforms
 
 **Commit:** `ce461fe Phase 1-2: Core transcriber + FastAPI server`
 
 ---
 
-## 🟡 PHASE 3: NODE.JS API GATEWAY 🟢 (CURRENT)
+## 🟡 PHASE 3: NODE.JS API GATEWAY ✅ DONE
 
-- [ ] **3.1** Initialize Node.js project
-  - Express.js or Fastify
-  - TypeScript setup
-  - Project structure (`api/src/`)
+- [x] **3.1** Express + TypeScript project
+  - `api/src/index.ts` - main server (port 3000)
+  - `tsconfig.json` - strict TypeScript config
+  - `nodemon.json` - dev auto-reload (ignores cache/)
 
-- [ ] **3.2** API Key system
-  - User registration endpoint
-  - API key generation
-  - Key validation middleware (`middleware/rateLimit.ts`)
+- [x] **3.2** API Key authentication
+  - `api/src/middleware/apiKey.ts`
+  - Keys stored in `.env` (not hardcoded)
+  - `X-API-Key` header validation
+  - Test keys: `test-key-free-123`, `test-key-premium-456`
 
-- [ ] **3.3** Rate limiting
-  - Tiered limits (free: 10/hr, premium: 100/hr)
-  - Per-API-key tracking
+- [x] **3.3** Rate limiting
+  - `api/src/middleware/rateLimit.ts`
+  - Tiered: free (10/hr) | premium (100/hr)
+  - 429 response with retry-after
+  - Rate limit headers on responses
 
-- [ ] **3.4** Endpoints
-  - `POST /api/v1/transcribe` - submit job (URL or file)
-  - `GET /api/v1/transcribe/:id` - get result
-  - `GET /api/v1/transcribe/:id/status` - check progress
+- [x] **3.4** API Endpoints
+  - `POST /api/v1/transcribe` - URL submission
+  - `POST /api/v1/transcribe/upload` - File upload (multer)
+  - `GET /api/v1/transcribe/:jobId` - Job status
+  - `GET /api/v1/transcribe/:jobId/result` - Result only
+  - `GET /api/v1/transcribe/:jobId/srt` - SRT download
+  - `GET /api/v1/transcribe/:jobId/vtt` - VTT download
+  - `GET /api/v1/cache/stats` - Cache stats
+  - `GET /health` - Health check (no auth)
 
-- [ ] **3.5** API documentation
-  - Swagger/OpenAPI auto-generated docs
+- [x] **3.5** Security
+  - CORS enabled
+  - Helmet security headers
+  - Input validation
+  - Error handling with proper status codes
+
+- [x] **3.6** Tested
+  - URL transcription (FB, IG, TikTok, YT) ✅
+  - File upload (test50.mp4 - 475KB) ✅
+  - Rate limit 429 verified ✅
+  - API key validation ✅
+
+**Commit:** `[latest] Phase 3: Node.js API Gateway with auth & rate limiting`
 
 ---
 
-## 🟠 PHASE 4: QUEUE SYSTEM 🔄
+## 🟠 PHASE 4: QUEUE SYSTEM 🔄 (CURRENT)
 
 - [ ] **4.1** Set up Redis
   - Docker container or local install
@@ -125,7 +138,12 @@
 - [ ] **5.2** SQLAlchemy models (migration-ready)
   - Easy switch from SQLite → PostgreSQL
 
-- [ ] **5.3** File storage
+- [ ] **5.3** API key management
+  - User registration endpoint
+  - Key generation & revocation
+  - Replace hardcoded `.env` keys
+
+- [ ] **5.4** File storage
   - Temp audio cleanup after transcription
   - Optional: S3/MinIO for persistent storage
 
@@ -165,7 +183,7 @@
 ```
 ✅ Phase 1: Core Python Service     ████████████████████ 100%
 ✅ Phase 2: FastAPI Service          ████████████████████ 100%
-⬜ Phase 3: Node.js API Gateway      ░░░░░░░░░░░░░░░░░░░░   0%
+✅ Phase 3: Node.js API Gateway      ████████████████████ 100%
 ⬜ Phase 4: Queue System             ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 5: Storage & Database       ░░░░░░░░░░░░░░░░░░░░   0%
 ⬜ Phase 6: Docker & Deployment      ░░░░░░░░░░░░░░░░░░░░   0%
@@ -180,22 +198,30 @@
 transcribe/
 ├── api/
 │   ├── services/
-│   │   ├── transcriber.py      ✅ Phase 1
-│   │   └── server.py           ✅ Phase 2
+│   │   ├── transcriber.py         ✅ Phase 1
+│   │   └── server.py              ✅ Phase 2
 │   └── src/
+│       ├── index.ts               ✅ Phase 3 (Express server)
 │       ├── middleware/
-│       │   └── rateLimit.ts    ⬜ Phase 3
-│       └── routes/
-│           └── transcription.ts ⬜ Phase 3
+│       │   ├── apiKey.ts          ✅ Phase 3 (.env keys)
+│       │   └── rateLimit.ts       ✅ Phase 3 (tiered)
+│       ├── routes/
+│       │   └── transcription.ts   ✅ Phase 3 (all endpoints)
+│       └── types/
+│           └── index.ts           ✅ Phase 3 (TypeScript types)
 ├── cache/
-│   └── transcriptions/         ✅ 10 cached files
+│   └── transcriptions/            ✅ Auto-managed cache
 ├── worker/
-│   └── transcription.worker.ts ⬜ Phase 4
-├── docker-compose.yml          ⬜ Phase 6
-├── requirements.txt            ✅
-├── test_main.py                ✅ Test suite
-├── TODO.md                     ✅ This file
-└── .gitignore                  ✅
+│   └── transcription.worker.ts    ⬜ Phase 4
+├── .env                           ✅ Environment variables
+├── .gitignore                     ✅
+├── docker-compose.yml             ⬜ Phase 6
+├── nodemon.json                   ✅ Dev config
+├── package.json                   ✅ Node dependencies
+├── requirements.txt               ✅ Python dependencies
+├── tsconfig.json                  ✅ TypeScript config
+├── test_main.py                   ✅ Phase 1 test suite
+└── TODO.md                        ✅ This file
 ```
 
 ---
@@ -204,10 +230,12 @@ transcribe/
 
 | Decision | Choice |
 |----------|--------|
-| Architecture | Microservices (Python + Node.js) |
+| Architecture | Microservices (Python FastAPI + Node.js Express) |
+| Python port | 8000 |
+| Node.js port | 3000 |
 | Input types | URLs + File upload |
-| Auth (CLI) | API Key in header |
-| Auth (Dashboard) | JWT tokens |
+| Auth (CLI) | API Key in `X-API-Key` header |
+| Auth (Dashboard) | JWT tokens (Phase 7) |
 | Database | SQLite + WAL (migration-ready for PostgreSQL) |
 | Caching | File-based (TTL + max files, no Redis needed) |
 | Model | faster-whisper base (CPU, int8) |
@@ -215,7 +243,7 @@ transcribe/
 
 ---
 
-## 🚀 Next Up: Phase 3
+## 🚀 Next Up: Phase 4
 
-Initialize Node.js API Gateway with TypeScript, API key auth, and rate limiting.
+Set up Redis + BullMQ queue system for handling multiple concurrent transcription jobs with proper job lifecycle management.
 ```

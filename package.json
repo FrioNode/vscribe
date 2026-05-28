@@ -23,15 +23,18 @@
     "test": "node dist/index.js",
     "dev": "nodemon --exec ts-node api/src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "worker": "ts-node worker/transcription.worker.ts"
   },
   "dependencies": {
     "axios": "^1.16.1",
+    "bullmq": "^5.77.5",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "form-data": "^4.0.5",
     "helmet": "^8.2.0",
+    "ioredis": "^5.11.0",
     "multer": "^2.1.1"
   },
   "devDependencies": {
