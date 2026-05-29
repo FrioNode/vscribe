@@ -1,0 +1,49 @@
+# flyctl launch added from .gitignore
+# Python
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/dist
+**/build
+**/*.pyc
+
+# Cache (don't commit cached transcriptions)
+**/cache
+
+# Virtual environment
+**/venv
+**/.venv
+**/env
+
+# IDE
+**/.vscode
+**/.idea
+
+# OS
+**/.DS_Store
+**/Thumbs.db
+
+# Environment
+**/.env
+**/.env.local
+
+# Temp files
+**/*.tmp
+**/temp
+**/temp_audio.*
+
+# Notes
+**/notes.md
+
+# Node
+**/node_modules
+**/dist
+**/*.mp4
+**/*.mp3
+**/*.wav
+
+# Database
+**/data
+**/*.db
+**/*.db-wal
+**/*.db-shm
