@@ -52,7 +52,7 @@ router.post('/auth/verify', async (req: Request, res: Response) => {
     const apiKey = createApiKey(userId, 'Default', 'free');
     sendWelcome({ to: email, apiKey }).catch(() => {});
 
-    return res.status(201).json({ message: 'Email verified. Your API key is ready.', user_id: userId, api_key: apiKey, plan: 'free', limit_hr: 10 });
+    return res.status(201).json({ message: 'Email verified. Your API key is ready.', user_id: userId, api_key: apiKey, plan: 'free', limit_hr: 20 });
   } catch (err: any) {
     return res.status(500).json({ error: 'Verification failed' });
   }

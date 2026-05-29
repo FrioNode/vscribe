@@ -3,7 +3,6 @@ import axios from 'axios';
 
 const PYTHON_SERVICE = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
 
-// Same auto-detect logic
 function getRedisConnection(): ConnectionOptions {
   if (process.env.UPSTASH_REDIS_URL) {
     console.log('🔗 Worker using Upstash Redis');
@@ -11,17 +10,10 @@ function getRedisConnection(): ConnectionOptions {
   }
   if (process.env.REDIS_URL) {
     console.log('🔗 Worker using Redis URL');
-    return {
-      url: process.env.REDIS_URL,
-      tls: process.env.REDIS_URL.startsWith('rediss://') ? {} : undefined,
-    };
+    return { url: process.env.REDIS_URL, tls: process.env.REDIS_URL.startsWith('rediss://') ? {} : undefined };
   }
   console.log('🔗 Worker using local Redis');
-  return {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD || 'node',
-  };
+  return { host: process.env.REDIS_HOST || 'localhost', port: parseInt(process.env.REDIS_PORT || '6379'), password: process.env.REDIS_PASSWORD || 'node' };
 }
 
 interface TranscriptionJob {
@@ -32,14 +24,37 @@ interface TranscriptionJob {
   webhookUrl?: string;
 }
 
+// Throttled logger - only log when value actually changes
+function createThrottledLogger(jobId: string) {
+  let lastProgress = -1;
+  let lastLog = '';
+
+  return {
+    progress(percent: number, label: string) {
+      if (percent !== lastProgress) {
+        lastProgress = percent;
+        console.log(`📊 ${jobId}: ${percent}% - ${label}`);
+      }
+    },
+    log(msg: string) {
+      if (msg !== lastLog) {
+        lastLog = msg;
+        console.log(`📝 ${jobId}: ${msg}`);
+      }
+    }
+  };
+}
+
 const worker = new Worker(
   'transcription',
   async (job: Job<TranscriptionJob>) => {
     const { source, format, isUrl, webhookUrl } = job.data;
-    console.log(`🎯 Processing job ${job.id}: ${source.slice(0, 50)}...`);
+    const log = createThrottledLogger(job.id!);
 
-    await job.updateProgress(10);
-    await job.log('Submitting to Python service...');
+    console.log(`🎯 ${job.id}: ${source.slice(0, 60)}...`);
+    
+    await job.updateProgress(5);
+    log.progress(5, 'Starting download...');
 
     try {
       const response = await axios.post(`${PYTHON_SERVICE}/transcribe`, {
@@ -49,8 +64,7 @@ const worker = new Worker(
       }, { timeout: 600000 });
 
       const pythonJobId = response.data.job_id;
-      await job.log(`Python job created: ${pythonJobId}`);
-      await job.updateProgress(20);
+      log.progress(10, 'Submitted to transcriber');
 
       let result = null;
       let attempts = 0;
@@ -62,17 +76,28 @@ const worker = new Worker(
 
         if (data.status === 'completed') {
           result = data.result;
+          log.progress(100, 'Done!');
           await job.updateProgress(100);
-          await job.log('Transcription completed');
           break;
         }
         if (data.status === 'failed') {
           throw new Error(data.error || 'Transcription failed');
         }
 
-        const progress = 20 + (data.progress * 0.7);
-        await job.updateProgress(Math.round(progress));
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Map Python progress (0-100) to our range (10-95)
+        const pythonProgress = data.progress || 0;
+        const mappedProgress = Math.round(10 + (pythonProgress * 0.85));
+        
+        // Only log meaningful stages
+        let label = 'Processing...';
+        if (pythonProgress < 20) label = 'Downloading video...';
+        else if (pythonProgress < 50) label = 'Extracting audio...';
+        else if (pythonProgress < 90) label = 'Transcribing...';
+        else label = 'Finalizing...';
+
+        log.progress(mappedProgress, label);
+        await job.updateProgress(mappedProgress);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2s instead of 1s
         attempts++;
       }
 
@@ -84,7 +109,7 @@ const worker = new Worker(
 
       return result;
     } catch (error: any) {
-      await job.log(`Error: ${error.message}`);
+      console.error(`❌ ${job.id}: ${error.message}`);
       throw error;
     }
   },
@@ -95,12 +120,10 @@ const worker = new Worker(
   }
 );
 
-worker.on('completed', (job) => console.log(`✅ Job ${job.id} completed`));
-worker.on('failed', (job, err) => console.error(`❌ Job ${job?.id} failed:`, err.message));
-worker.on('progress', (job, progress) => console.log(`📊 Job ${job.id}: ${progress}%`));
+worker.on('completed', (job) => console.log(`✅ ${job.id}: completed`));
+worker.on('failed', (job, err) => console.error(`❌ ${job?.id}: failed - ${err.message}`));
 
 console.log('👷 Transcription worker started');
-console.log('   Concurrency: 2');
-console.log('   Rate limit: 5/min');
+console.log('   Concurrency: 2 | Rate limit: 5/min | Poll interval: 2s');
 
 export { worker };
