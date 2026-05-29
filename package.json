@@ -21,10 +21,12 @@
   "main": "api/src/index.ts",
   "scripts": {
     "test": "node dist/index.js",
-    "dev": "nodemon --exec ts-node api/src/index.ts",
+    "dev": "node scripts/start-all.js",
     "build": "tsc",
     "start": "node dist/index.js",
-    "worker": "ts-node worker/transcription.worker.ts"
+    "worker": "ts-node worker/transcription.worker.ts",
+    "python": "python3 api/services/server.py",
+    "server": "node scripts/start-all.js"
   },
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",
@@ -32,6 +34,7 @@
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.10.0",
     "bullmq": "^5.77.5",
+    "child_process": "^1.0.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -39,6 +42,7 @@
     "helmet": "^8.2.0",
     "ioredis": "^5.11.0",
     "multer": "^2.1.1",
+    "path": "^0.12.7",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
